@@ -1,0 +1,51 @@
+{
+  "name": "liturgy-dashboard",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": "^22.12.0 || ^24.0.0 || >=26.0.0"
+  },
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "eslint . --max-warnings=0",
+    "typecheck": "next typegen && tsc --noEmit",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "check": "npm run format:check && npm run lint && npm run typecheck && npm test",
+    "test": "vitest run --exclude tests/integration/**",
+    "test:db": "vitest run tests/integration",
+    "test:e2e": "playwright test",
+    "db:types": "node scripts/generate-database-types.mjs",
+    "db:docs": "node scripts/generate-database-docs.mjs",
+    "db:seed:generate": "node --conditions=react-server --import tsx scripts/generate-seed.ts",
+    "db:env": "node scripts/local-environment.mjs"
+  },
+  "dependencies": {
+    "@supabase/ssr": "^0.12.6",
+    "@supabase/supabase-js": "^2.0.0",
+    "bible-passage-reference-parser": "^4.0.0",
+    "html-to-text": "^10.0.1",
+    "next": "16.3.4",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
+    "server-only": "^0.0.1",
+    "zod": "^4.5.4"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.63.0",
+    "@types/html-to-text": "^9.0.4",
+    "@types/node": "^22.0.0",
+    "@types/react": "^19.0.0",
+    "@types/react-dom": "^19.0.0",
+    "eslint": "^9.39.5",
+    "eslint-config-next": "16.3.4",
+    "prettier": "^3.0.0",
+    "supabase": "2.117.0",
+    "tsx": "^4.23.13",
+    "typescript": "^5.0.0",
+    "vitest": "^5.0.0"
+  }
+}
