@@ -8,6 +8,7 @@ import { AppError } from "@/types/errors";
 import {
   apiResponse,
   requireSameOrigin,
+  requestOrigin,
 } from "../../_utils/api-response.utils";
 import {
   credentialsSchema,
@@ -26,7 +27,10 @@ export async function POST(
       await signIn(data.email, data.password);
     } else if (operation === "sign-out") await signOut();
     else if (operation === "forgot-password")
-      await requestPasswordReset(emailSchema.parse(await request.json()).email);
+      await requestPasswordReset(
+        emailSchema.parse(await request.json()).email,
+        requestOrigin(request),
+      );
     else if (operation === "update-password")
       await updatePassword(passwordSchema.parse(await request.json()).password);
     else throw new AppError(404, "Unknown authentication operation.");

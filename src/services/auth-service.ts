@@ -38,14 +38,16 @@ export async function signOut() {
   const { error } = await client.auth.signOut();
   if (error) throw new AppError(503, "Unable to sign out. Please retry.");
 }
-export async function requestPasswordReset(email: string) {
+export async function requestPasswordReset(email: string, origin: string) {
   const client = await createRequestClient(true);
   // The email template uses token_hash verification, supporting a different browser.
-  const { error } = await client.auth.resetPasswordForEmail(email);
+  const { error } = await client.auth.resetPasswordForEmail(email, {
+    redirectTo: new URL("/auth/confirm?type=recovery", origin).href,
+  });
   if (error && error.status === 429)
     throw new AppError(
       429,
-      "Too many requests. Please wait before trying again.",
+      "The email sending limit has been reached. Wait before requesting another link, or contact your administrator to check email delivery limits.",
     );
   if (error && (error.status ?? 500) >= 500)
     throw new AppError(

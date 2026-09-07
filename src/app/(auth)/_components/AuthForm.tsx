@@ -42,7 +42,8 @@ export function AuthForm({
         {invalidLink && (
           <p role="alert" className="notice">
             This invitation or reset link is invalid or expired. Request a new
-            password reset, or ask your administrator for another invitation.
+            password reset, or ask your administrator for another invitation.{" "}
+            <Link href="/forgot-password">Request a new reset link</Link>.
           </p>
         )}
         <form
@@ -52,6 +53,16 @@ export function AuthForm({
             setBusy(true);
             setMessage("");
             const form = new FormData(event.currentTarget);
+            if (
+              mode === "update-password" &&
+              form.get("password") !== form.get("confirmPassword")
+            ) {
+              setMessage(
+                "The passwords do not match. Please enter them again.",
+              );
+              setBusy(false);
+              return;
+            }
             try {
               await fetchJson(
                 `/api/auth/${mode}`,
@@ -97,6 +108,19 @@ export function AuthForm({
                   mode === "sign-in" ? "current-password" : "new-password"
                 }
                 minLength={mode === "update-password" ? 12 : 1}
+                maxLength={128}
+                required
+              />
+            </label>
+          )}
+          {mode === "update-password" && (
+            <label>
+              Confirm new password
+              <input
+                type="password"
+                name="confirmPassword"
+                autoComplete="new-password"
+                minLength={12}
                 maxLength={128}
                 required
               />

@@ -126,7 +126,10 @@ test("accepts invitations, updates passwords and handles invalid callbacks", asy
       `/auth/confirm?token_hash=${invite.data.properties!.hashed_token}&type=invite`,
     );
     await expect(page).toHaveURL(/update-password/);
-    await page.getByLabel("New password").fill("Invited-elders-2026!");
+    await page
+      .getByLabel("New password", { exact: true })
+      .fill("Invited-elders-2026!");
+    await page.getByLabel("Confirm new password").fill("Invited-elders-2026!");
     await page.getByRole("button", { name: "Save password" }).click();
     await expect(page).toHaveURL(/dashboard/);
     await page.getByRole("button", { name: "Sign out", exact: true }).click();
@@ -140,7 +143,12 @@ test("accepts invitations, updates passwords and handles invalid callbacks", asy
       `/auth/confirm?token_hash=${recovery.data.properties!.hashed_token}&type=recovery`,
     );
     await expect(page).toHaveURL(/update-password/);
-    await page.getByLabel("New password").fill("Recovered-elders-2026!");
+    await page
+      .getByLabel("New password", { exact: true })
+      .fill("Recovered-elders-2026!");
+    await page
+      .getByLabel("Confirm new password")
+      .fill("Recovered-elders-2026!");
     await page.getByRole("button", { name: "Save password" }).click();
     await expect(page).toHaveURL(/dashboard/);
     await page.goto("/auth/confirm?token_hash=invalid&type=recovery");
@@ -161,4 +169,75 @@ test("forgotten-password request is useful without account disclosure", async ({
   await expect(page.getByRole("status")).toContainText(
     "If an invited account exists",
   );
+});
+
+test("recovers through a delivered email in a different browser and signs in with the new password", async ({
+  browser,
+  request,
+}) => {
+  const email = `recovery-${Date.now()}@example.test`;
+  const created = await admin.auth.admin.createUser({
+    email,
+    password: "Original-password-2026!",
+    email_confirm: true,
+  });
+  expect(created.error).toBeNull();
+  const context = await browser.newContext();
+  try {
+    const response = await request.post("/api/auth/forgot-password", {
+      headers: { Origin: "http://127.0.0.1:3000" },
+      data: { email },
+    });
+    expect(response.status()).toBe(200);
+    let messageId = "";
+    await expect
+      .poll(async () => {
+        const messages = await (
+          await request.get("http://127.0.0.1:55324/api/v1/messages")
+        ).json();
+        messageId =
+          messages.messages.find(
+            (m: { ID: string; To: { Address: string }[] }) =>
+              m.To.some((to) => to.Address === email),
+          )?.ID ?? "";
+        return Boolean(messageId);
+      })
+      .toBe(true);
+    const message = await (
+      await request.get(`http://127.0.0.1:55324/api/v1/message/${messageId}`)
+    ).json();
+    const href = /href="([^"]+)"/
+      .exec(message.HTML)?.[1]
+      ?.replaceAll("&amp;", "&");
+    expect(href).toBeTruthy();
+    const page = await context.newPage();
+    await page.goto(href!);
+    await expect(page).toHaveURL(/update-password/);
+    await page
+      .getByLabel("New password", { exact: true })
+      .fill("Recovered-password-2026!");
+    await page
+      .getByLabel("Confirm new password")
+      .fill("Different-password-2026!");
+    await page.getByRole("button", { name: "Save password" }).click();
+    await expect(page.getByRole("status")).toContainText(
+      "passwords do not match",
+    );
+    await page
+      .getByLabel("Confirm new password")
+      .fill("Recovered-password-2026!");
+    await page.getByRole("button", { name: "Save password" }).click();
+    await expect(page).toHaveURL(/dashboard/);
+    await page.getByRole("button", { name: "Sign out", exact: true }).click();
+    await expect(page).toHaveURL(/sign-in/);
+    await page.getByLabel("Email address").fill(email);
+    await page
+      .getByLabel("Password", { exact: true })
+      .fill("Recovered-password-2026!");
+    await page.getByRole("button", { name: "Sign in", exact: true }).click();
+    await expect(page).toHaveURL(/dashboard/);
+  } finally {
+    await context.close();
+    await admin.auth.admin.deleteUser(created.data.user!.id);
+  }
 });

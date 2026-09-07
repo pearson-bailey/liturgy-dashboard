@@ -39,7 +39,10 @@ receive safe errors.
 
 Invitation/recovery templates use `/auth/confirm?token_hash=…&type=invite|recovery`.
 The callback verifies the token server-side and sends the user to `/update-password`.
-It also supports PKCE authorization codes and sends those sessions to `/dashboard`.
+It also supports PKCE authorization codes; a recovery type sends those sessions
+to `/update-password`, while other code callbacks go to `/dashboard`. App-initiated
+recovery requests explicitly supply `/auth/confirm?type=recovery` on the requesting
+origin, which must be allowlisted. The password form requires matching confirmation.
 Redirect destinations are fixed; arbitrary user-supplied redirect URLs are not accepted.
 Expired/reused/invalid links return to sign-in with guidance for obtaining a new link.
 
@@ -49,6 +52,8 @@ Invite real users using Supabase's administrative invitation flow, outside this
 application. Configure the deployed Site URL and install the versioned invite and
 recovery email templates when using hosted Supabase. Local mail is captured by
 Mailpit and never sent to real recipients. No public signup endpoint is implemented.
+Follow [hosted authentication setup](../workflows/hosted-authentication.md) for the
+exact URLs, template configuration, SMTP requirements, and deployed verification.
 
 The application relies on the Supabase project's invitation-only settings as its
 membership boundary. Do not share this Auth project with unrelated applications

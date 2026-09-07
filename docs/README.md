@@ -28,6 +28,7 @@ owns invitation-only identity and session flows.
 ## Workflows
 
 - [Local development and setup](workflows/local-development.md)
+- [Hosted invitations and password recovery](workflows/hosted-authentication.md)
 - [Add a page](workflows/add-page.md)
 - [Add an API endpoint](workflows/add-api-endpoint.md)
 - [Add database access](workflows/add-database-access.md)
